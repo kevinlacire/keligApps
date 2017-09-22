@@ -47,49 +47,50 @@
           <label for="indexInitialCounter">Index compteur initial (en m<sup>3</sup>)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexInitialCounter">
+            <input type="number" class="form-control" id="indexInitialCounter" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
-          <label for="indexInitialCounter36s">Index compteur sur 36s</label>
+          <label for="indexCounter36s">Index compteur sur 36s</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexInitialCounter36s">
+            <input type="number" class="form-control" id="indexCounter36s" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
-          <label for="indexInitialCounter100s">Index compteur sur 100s</label>
+          <label for="indexCounter100s">Index compteur sur 100s</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexInitialCounter100s">
+            <input type="number" class="form-control" id="indexCounter100s" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
           <label for="pciNaturalGas">PCI gaz naturel (en nM<sup>3</sup>/h)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">nM<sup>3</sup>/h</div>
-            <input type="number" class="form-control" id="pciNaturalGas" value="11.5" placeholder="11.5">
+            <input type="number" class="form-control" id="pciNaturalGas" value="11.5" placeholder="11.5" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
           <label for="gasTemperature">Température du gaz (en °C)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">°C</div>
-            <input type="number" class="form-control" id="gasTemperature" value="15" placeholder="15">
+            <input type="number" class="form-control" id="gasTemperature" value="15" placeholder="15" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
           <label for="gasPressure">Pression du gaz (en milliBar)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">mBar</div>
-            <input type="number" class="form-control" id="gasPressure" value="21" placeholder="21">
+            <input type="number" class="form-control" id="gasPressure" value="21" placeholder="21" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
-          <label for="pciNaturalGas">Pression atmosphérique (en milliBar)</label>
-          <div class="input-group mb-2 mb-sm-0"></div>
-          <div class="input-group-addon">mBar</div>
-          <input type="number" class="form-control" id="pciNaturalGas" value="1013" placeholder="1013">
+          <label for="atmosphericPressure">Pression atmosphérique (en milliBar)</label>
+          <div class="input-group mb-2 mb-sm-0">
+            <div class="input-group-addon">mBar</div>
+            <input type="number" class="form-control" id="atmosphericPressure" value="1013" placeholder="1013" onchange="calculateAll()">
+          </div>
         </div>
       </form>
       <fieldset class="col-md-6">
@@ -111,9 +112,59 @@
     </div>
   </div>
   <script>
-    $(function () {
+      var calculateAll = function () {
+        gasDebitM3();
+        gasDebitNM3();
+        burnerPowerKW();
+      };
 
-    })();
+      var gasDebitM3 = function () {
+        var _indexInitialCounter = parseFloat($("#indexInitialCounter").val());
+        var _indexCounter36s = parseFloat($("#indexCounter36s").val());
+        var _indexCounter100s = parseFloat($("#indexCounter100s").val());
+
+        var precision = _indexCounter100s ? _indexCounter100s : _indexCounter36s;
+        var multiplicator = _indexCounter100s ? 36 : 100;
+
+        if (_indexInitialCounter > precision) {
+          return 0;
+        }
+
+        var res = (precision - _indexInitialCounter) * multiplicator;
+        $("#gasDebitM3").val(res.toFixed(2));
+        return res;
+      };
+
+      var gasDebitNM3 = function () {
+        var _gasDebitM3 = parseFloat(gasDebitM3());
+
+        if (_gasDebitM3 == 0) {
+          return 0;
+        }
+
+        var _gasPressure = parseFloat($("#gasPressure").val());
+        var _gasTemperature = parseFloat($("#gasTemperature").val());
+        var _atmosphericPressure = parseFloat($("#atmosphericPressure").val());
+        
+        var res = _gasDebitM3 * ((273 / (273 + _gasPressure) * ((_gasTemperature + _atmosphericPressure) / _atmosphericPressure)));
+        console.info((273 / (273 + _gasPressure)));
+        console.info(res);
+        $("#gasDebitNM3").val(res.toFixed(2));
+        return res;
+      };
+
+      var burnerPowerKW = function() {
+        var _gasDebitNM3 = parseFloat(gasDebitNM3());
+
+        if (_gasDebitNM3 == 0) {
+          return 0;
+        }
+
+        var _pciNaturalGas = parseFloat($("#pciNaturalGas").val());
+        var res = _gasDebitNM3 * _pciNaturalGas;
+        $("#burnerPowerKW").val(res.toFixed(2));
+        return res;
+      };
   </script>
 </body>
 
