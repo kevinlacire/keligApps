@@ -14,6 +14,7 @@
     crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
     crossorigin="anonymous"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.3/math.min.js"></script>
   <style>
     body {
       padding-top: 3.5rem;
@@ -98,15 +99,24 @@
         <hr>
         <div class="form-group">
           <label for="gasDebitM3">Débit gaz en m3/h</label>
-          <input type="number" class="form-control" id="gasDebitM3" readonly>
+          <div class="input-group mb-2 mb-sm-0">
+            <div class="input-group-addon">m<sup>3</sup>/h</div>
+            <input type="number" class="form-control" id="gasDebitM3" readonly>
+          </div>
         </div>
         <div class="form-group">
           <label for="gasDebitNM3">Débit gaz en nm3/h</label>
-          <input type="number" class="form-control" id="gasDebitNM3" readonly>
+            <div class="input-group mb-2 mb-sm-0">
+            <div class="input-group-addon">nM<sup>3</sup>/h</div>
+              <input type="number" class="form-control" id="gasDebitNM3" readonly>
+            </div>              
         </div>
         <div class="form-group">
           <label for="burnerPowerKW">Puissance bruleur en kW</label>
-          <input type="number" class="form-control" id="burnerPowerKW" readonly>
+          <div class="input-group mb-2 mb-sm-0">
+            <div class="input-group-addon">kW</div>
+            <input type="number" class="form-control" id="burnerPowerKW" readonly>
+          </div>            
         </div>
       </fieldset>
     </div>
@@ -119,49 +129,50 @@
       };
 
       var gasDebitM3 = function () {
-        var _indexInitialCounter = parseFloat($("#indexInitialCounter").val());
-        var _indexCounter36s = parseFloat($("#indexCounter36s").val());
-        var _indexCounter100s = parseFloat($("#indexCounter100s").val());
+        var _indexInitialCounter = math.bignumber(parseFloat($("#indexInitialCounter").val()));
+        var _indexCounter36s = math.bignumber(parseFloat($("#indexCounter36s").val()));
+        var _indexCounter100s = math.bignumber(parseFloat($("#indexCounter100s").val()));
 
-        var precision = _indexCounter100s ? _indexCounter100s : _indexCounter36s;
-        var multiplicator = _indexCounter100s ? 36 : 100;
+        var precision = _indexCounter100s != "NaN" ? math.bignumber(_indexCounter100s) : math.bignumber(_indexCounter36s);
+        var multiplicator = _indexCounter100s != "NaN" ? math.bignumber(36) : math.bignumber(100);
 
-        if (_indexInitialCounter > precision) {
+        if (math.compare(_indexInitialCounter, precision) > 0) {
           return 0;
         }
 
-        var res = (precision - _indexInitialCounter) * multiplicator;
+        var res = parseFloat(math.multiply(math.subtract(precision, _indexInitialCounter), multiplicator));
         $("#gasDebitM3").val(res.toFixed(2));
         return res;
       };
 
       var gasDebitNM3 = function () {
-        var _gasDebitM3 = parseFloat(gasDebitM3());
+        var _gasDebitM3 = math.bignumber(gasDebitM3());
 
         if (_gasDebitM3 == 0) {
           return 0;
         }
 
-        var _gasPressure = parseFloat($("#gasPressure").val());
-        var _gasTemperature = parseFloat($("#gasTemperature").val());
-        var _atmosphericPressure = parseFloat($("#atmosphericPressure").val());
+        var _gasPressure = math.bignumber(parseFloat($("#gasPressure").val()));
+        var _gasTemperature = math.bignumber(parseFloat($("#gasTemperature").val()));
+        var _atmosphericPressure = math.bignumber(parseFloat($("#atmosphericPressure").val()));
         
-        var res = _gasDebitM3 * ((273 / (273 + _gasPressure) * ((_gasTemperature + _atmosphericPressure) / _atmosphericPressure)));
-        console.info((273 / (273 + _gasPressure)));
-        console.info(res);
+        var subPart1 = math.divide(math.bignumber(273), math.add(math.bignumber(273), math.bignumber(_gasTemperature)));
+        var subpart2 = math.divide(math.add(math.bignumber(_gasPressure), math.bignumber(_atmosphericPressure)), math.bignumber(_atmosphericPressure));
+        var subPart = math.multiply(subPart1, subpart2);
+        var res = parseFloat(math.multiply(math.bignumber(_gasDebitM3), subPart));
         $("#gasDebitNM3").val(res.toFixed(2));
         return res;
       };
 
       var burnerPowerKW = function() {
-        var _gasDebitNM3 = parseFloat(gasDebitNM3());
+        var _gasDebitNM3 = math.bignumber(gasDebitNM3());
 
-        if (_gasDebitNM3 == 0) {
+        if (math.compare(_gasDebitNM3, 0) == 0) {
           return 0;
         }
 
-        var _pciNaturalGas = parseFloat($("#pciNaturalGas").val());
-        var res = _gasDebitNM3 * _pciNaturalGas;
+        var _pciNaturalGas = math.bignumber(parseFloat($("#pciNaturalGas").val()));
+        var res = parseFloat(math.multiply(_gasDebitNM3, _pciNaturalGas));
         $("#burnerPowerKW").val(res.toFixed(2));
         return res;
       };
