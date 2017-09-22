@@ -15,9 +15,13 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
     crossorigin="anonymous"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.3/math.min.js"></script>
+  <script src="https://raw.githubusercontent.com/mckamey/countdownjs/master/countdown.min.js"></script>
   <style>
     body {
       padding-top: 3.5rem;
+    }
+    .bold {
+      font-weight: 800;
     }
   </style>
 </head>
@@ -101,21 +105,21 @@
           <label for="gasDebitM3">Débit gaz en m3/h</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup>/h</div>
-            <input type="number" class="form-control" id="gasDebitM3" readonly>
+            <input type="number" class="form-control form-control-lg bold" id="gasDebitM3" readonly>
           </div>
         </div>
         <div class="form-group">
           <label for="gasDebitNM3">Débit gaz en nm3/h</label>
             <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">nM<sup>3</sup>/h</div>
-              <input type="number" class="form-control" id="gasDebitNM3" readonly>
+              <input type="number" class="form-control form-control-lg bold" id="gasDebitNM3" readonly>
             </div>              
         </div>
         <div class="form-group">
           <label for="burnerPowerKW">Puissance bruleur en kW</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">kW</div>
-            <input type="number" class="form-control" id="burnerPowerKW" readonly>
+            <input type="number" class="form-control form-control-lg bold" id="burnerPowerKW" readonly>
           </div>            
         </div>
       </fieldset>
