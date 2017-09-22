@@ -15,7 +15,7 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
     crossorigin="anonymous"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.3/math.min.js"></script>
-  <script src="https://raw.githubusercontent.com/mckamey/countdownjs/master/countdown.min.js"></script>
+  <script src="./js/countdown.min.js"></script>
   <style>
     body {
       padding-top: 3.5rem;
@@ -122,6 +122,8 @@
             <input type="number" class="form-control form-control-lg bold" id="burnerPowerKW" readonly>
           </div>            
         </div>
+        <p id="countdown">100s</p>
+        <button class="button" onclick="startCountdown">Lancer</button>
       </fieldset>
     </div>
   </div>
@@ -131,6 +133,17 @@
         gasDebitNM3();
         burnerPowerKW();
       };
+
+      var countdown = $('#countdown');
+
+      var inXSeconds = Date.now() + (100 * 1000);
+      var timerId = countdown(function(ts) {
+        countdown.text(((ts.seconds < 10) ? "0" : "") + ts.seconds);
+        if(ts.hours == 0 && ts.minutes == 0 && ts.seconds == 0){
+          window.clearInterval(timerId);
+          localStorage.setItem('over', true);
+        }
+      }, parseInt(inXSeconds), countdown.SECONDS);
 
       var gasDebitM3 = function () {
         var _indexInitialCounter = math.bignumber(parseFloat($("#indexInitialCounter").val()));
