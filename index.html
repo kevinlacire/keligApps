@@ -20,13 +20,87 @@
     body {
       padding-top: 3.5rem;
     }
+
     .bold {
-      font-weight: 800;
+      font-weight: 700;
     }
   </style>
 </head>
 
 <body>
+  <script>
+    var timerId;
+    var defaultMesureDuration = 100;
+
+    var calculateAll = function () {
+      gasDebitM3();
+      gasDebitNM3();
+      burnerPowerKW();
+    };
+
+    var gasDebitM3 = function () {
+      var mesureDuration;
+      var _mesureDuration = parseInt($("#mesureDuration").val());
+      var _mesuredVolume = parseFloat($("#mesuredVolume").val());
+
+      var multiplicator = math.divide(math.bignumber(3600), math.bignumber(_mesureDuration));
+
+      if (!_mesuredVolume) {
+        return 0;
+      }
+
+      var res = math.multiply(_mesuredVolume, multiplicator);
+      $("#gasDebitM3").val(res.toFixed(2));
+      return res;
+    }
+
+    var gasDebitNM3 = function () {
+      var _gasDebitM3 = math.bignumber(gasDebitM3());
+      var _gasPressure = math.bignumber(parseFloat($("#gasPressure").val()));
+      var _gasTemperature = math.bignumber(parseFloat($("#gasTemperature").val()));
+      var _atmosphericPressure = math.bignumber(parseFloat($("#atmosphericPressure").val()));
+
+      var subPart1 = math.divide(math.bignumber(273), math.add(math.bignumber(273), math.bignumber(_gasTemperature)));
+      var subpart2 = math.divide(math.add(math.bignumber(_gasPressure), math.bignumber(_atmosphericPressure)), math.bignumber(_atmosphericPressure));
+      var subPart = math.multiply(subPart1, subpart2);
+      var res = parseFloat(math.multiply(math.bignumber(_gasDebitM3), subPart));
+      $("#gasDebitNM3").val(res.toFixed(2));
+      return res;
+    };
+
+    var burnerPowerKW = function () {
+      var _gasDebitNM3 = math.bignumber(gasDebitNM3());
+
+      if (math.compare(_gasDebitNM3, 0) == 0) {
+        return 0;
+      }
+
+      var _pciNaturalGas = math.bignumber(parseFloat($("#pciNaturalGas").val()));
+      var res = parseFloat(math.multiply(_gasDebitNM3, _pciNaturalGas));
+      $("#burnerPowerKW").val(res.toFixed(2));
+      return res;
+    };
+
+    $(function () {
+      $('#startCountdown').click(function () {
+        var _mesureDuration = $('#mesureDuration');
+        var _mesureDurationVal = _mesureDuration.val();
+
+        var inXSeconds = Date.now() + (_mesureDurationVal * 1000);
+        timerId = countdown(function (ts) {
+          _mesureDuration.val(ts.seconds);
+          if (ts.seconds == 0) {
+            window.clearInterval(timerId);
+          }
+        }, parseInt(inXSeconds), countdown.SECONDS);
+      });
+
+      $('#resetCountdown').click(function () {
+        $('#mesureDuration').val(defaultMesureDuration);
+        window.clearInterval(timerId);
+      });
+    });
+  </script>
   <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
     <a class="navbar-brand" href="#">Kêlig Apps</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
@@ -45,28 +119,26 @@
     <h1>TopGaz</h1>
     <hr>
     <div class="row">
-      <!-- <form class="form-inline"> -->
       <form class="col-md-6">
         <h3>Valeurs mesurées</h3>
         <div class="form-group">
-          <label for="indexInitialCounter">Index compteur initial (en m<sup>3</sup>)</label>
+          <label for="mesureDuration">Durée de la mesure (en secondes)</label>
           <div class="input-group mb-2 mb-sm-0">
-            <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexInitialCounter" onchange="calculateAll()">
+            <div class="input-group-addon">s</div>
+            <input type="number" class="form-control form-control-lg bold" id="mesureDuration" value="100" placeholder="100">
           </div>
         </div>
         <div class="form-group">
-          <label for="indexCounter36s">Index compteur sur 36s</label>
-          <div class="input-group mb-2 mb-sm-0">
-            <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexCounter36s" onchange="calculateAll()">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary" id="startCountdown">Start</button>
+            <button type="button" class="btn btn-dark" id="resetCountdown">Reset</button>
           </div>
         </div>
         <div class="form-group">
-          <label for="indexCounter100s">Index compteur sur 100s</label>
+          <label for="mesuredVolume">Volume mesuré (en M<sup>3</sup>)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup></div>
-            <input type="number" class="form-control" id="indexCounter100s" onchange="calculateAll()">
+            <input type="number" class="form-control" id="mesuredVolume" step=".01" onchange="calculateAll()">
           </div>
         </div>
         <div class="form-group">
@@ -102,98 +174,29 @@
         <h3>Résultats</h3>
         <hr>
         <div class="form-group">
-          <label for="gasDebitM3">Débit gaz en m3/h</label>
+          <label for="gasDebitM3">Débit gaz (en m<sup>3</sup>/h)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">m<sup>3</sup>/h</div>
             <input type="number" class="form-control form-control-lg bold" id="gasDebitM3" readonly>
           </div>
         </div>
         <div class="form-group">
-          <label for="gasDebitNM3">Débit gaz en nm3/h</label>
-            <div class="input-group mb-2 mb-sm-0">
+          <label for="gasDebitNM3">Débit gaz (en nM<sup>3</sup>/h)</label>
+          <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">nM<sup>3</sup>/h</div>
-              <input type="number" class="form-control form-control-lg bold" id="gasDebitNM3" readonly>
-            </div>              
+            <input type="number" class="form-control form-control-lg bold" id="gasDebitNM3" readonly>
+          </div>
         </div>
         <div class="form-group">
-          <label for="burnerPowerKW">Puissance bruleur en kW</label>
+          <label for="burnerPowerKW">Puissance bruleur (en kW)</label>
           <div class="input-group mb-2 mb-sm-0">
             <div class="input-group-addon">kW</div>
             <input type="number" class="form-control form-control-lg bold" id="burnerPowerKW" readonly>
-          </div>            
+          </div>
         </div>
-        <p id="countdown">100s</p>
-        <button class="button" onclick="startCountdown">Lancer</button>
       </fieldset>
     </div>
   </div>
-  <script>
-      var calculateAll = function () {
-        gasDebitM3();
-        gasDebitNM3();
-        burnerPowerKW();
-      };
-
-      var countdown = $('#countdown');
-
-      var inXSeconds = Date.now() + (100 * 1000);
-      var timerId = countdown(function(ts) {
-        countdown.text(((ts.seconds < 10) ? "0" : "") + ts.seconds);
-        if(ts.hours == 0 && ts.minutes == 0 && ts.seconds == 0){
-          window.clearInterval(timerId);
-          localStorage.setItem('over', true);
-        }
-      }, parseInt(inXSeconds), countdown.SECONDS);
-
-      var gasDebitM3 = function () {
-        var _indexInitialCounter = math.bignumber(parseFloat($("#indexInitialCounter").val()));
-        var _indexCounter36s = math.bignumber(parseFloat($("#indexCounter36s").val()));
-        var _indexCounter100s = math.bignumber(parseFloat($("#indexCounter100s").val()));
-
-        var precision = _indexCounter100s != "NaN" ? math.bignumber(_indexCounter100s) : math.bignumber(_indexCounter36s);
-        var multiplicator = _indexCounter100s != "NaN" ? math.bignumber(36) : math.bignumber(100);
-
-        if (math.compare(_indexInitialCounter, precision) > 0) {
-          return 0;
-        }
-
-        var res = parseFloat(math.multiply(math.subtract(precision, _indexInitialCounter), multiplicator));
-        $("#gasDebitM3").val(res.toFixed(2));
-        return res;
-      };
-
-      var gasDebitNM3 = function () {
-        var _gasDebitM3 = math.bignumber(gasDebitM3());
-
-        if (_gasDebitM3 == 0) {
-          return 0;
-        }
-
-        var _gasPressure = math.bignumber(parseFloat($("#gasPressure").val()));
-        var _gasTemperature = math.bignumber(parseFloat($("#gasTemperature").val()));
-        var _atmosphericPressure = math.bignumber(parseFloat($("#atmosphericPressure").val()));
-        
-        var subPart1 = math.divide(math.bignumber(273), math.add(math.bignumber(273), math.bignumber(_gasTemperature)));
-        var subpart2 = math.divide(math.add(math.bignumber(_gasPressure), math.bignumber(_atmosphericPressure)), math.bignumber(_atmosphericPressure));
-        var subPart = math.multiply(subPart1, subpart2);
-        var res = parseFloat(math.multiply(math.bignumber(_gasDebitM3), subPart));
-        $("#gasDebitNM3").val(res.toFixed(2));
-        return res;
-      };
-
-      var burnerPowerKW = function() {
-        var _gasDebitNM3 = math.bignumber(gasDebitNM3());
-
-        if (math.compare(_gasDebitNM3, 0) == 0) {
-          return 0;
-        }
-
-        var _pciNaturalGas = math.bignumber(parseFloat($("#pciNaturalGas").val()));
-        var res = parseFloat(math.multiply(_gasDebitNM3, _pciNaturalGas));
-        $("#burnerPowerKW").val(res.toFixed(2));
-        return res;
-      };
-  </script>
 </body>
 
 </html>
